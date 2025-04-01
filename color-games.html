@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>配色游戏 - ColorPal</title>
+    <!-- 图标库 -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css">
+    <!-- 基础样式 -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+    <!-- 自定义样式 -->
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .game-container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        .game-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        
+        .game-score {
+            background-color: #4361ee;
+            color: white;
+            border-radius: 50px;
+            padding: 0.5rem 1.5rem;
+            display: inline-block;
+            font-weight: bold;
+            margin-bottom: 1rem;
+        }
+        
+        .game-question {
+            font-size: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        .color-scheme {
+            display: flex;
+            margin-bottom: 2rem;
+        }
+        
+        .color-block {
+            flex: 1;
+            height: 120px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        
+        .color-block:first-child {
+            border-radius: 8px 0 0 8px;
+        }
+        
+        .color-block:last-child {
+            border-radius: 0 8px 8px 0;
+        }
+        
+        .color-block:hover {
+            transform: translateY(-5px);
+        }
+        
+        .color-block.question-mark {
+            background-color: #f1f1f1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 5rem;
+            color: #999;
+        }
+        
+        .color-options {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+        }
+        
+        .color-option {
+            height: 150px;
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: white;
+            text-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
+            transition: transform 0.2s;
+        }
+        
+        .color-option:hover {
+            transform: scale(1.03);
+        }
+        
+        .game-result {
+            margin-top: 2rem;
+            text-align: center;
+            padding: 1rem;
+            border-radius: 8px;
+            display: none;
+        }
+        
+        .game-result.correct {
+            background-color: #d1fae5;
+            color: #047857;
+        }
+        
+        .game-result.incorrect {
+            background-color: #fee2e2;
+            color: #b91c1c;
+        }
+        
+        .next-question {
+            display: block;
+            margin: 1rem auto;
+        }
+        
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            margin-bottom: 1rem;
+            color: var(--primary-color);
+            text-decoration: none;
+        }
+
+        .back-link:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container py-4">
+        <a href="index.html" class="back-link"><i class="ri-arrow-left-line me-1"></i> 返回主页</a>
+        
+        <div class="game-container">
+            <div class="game-header">
+                <h1 class="mb-3">猜猜下一个颜色</h1>
+                <p class="mb-4">第三个是什么颜色？从下面四个颜色选一个。</p>
+                <div class="game-score">
+                    <span id="current-score">0</span> / <span id="total-questions">0</span>
+                </div>
+            </div>
+            
+            <div class="color-scheme">
+                <div class="color-block" id="color-1"></div>
+                <div class="color-block" id="color-2"></div>
+                <div class="color-block question-mark" id="color-3">?</div>
+            </div>
+            
+            <div class="color-options">
+                <div class="color-option" id="option-1"></div>
+                <div class="color-option" id="option-2"></div>
+                <div class="color-option" id="option-3"></div>
+                <div class="color-option" id="option-4"></div>
+            </div>
+            
+            <div class="game-result" id="result">
+                <h3 id="result-text"></h3>
+                <p id="result-explanation"></p>
+                <button class="btn btn-primary next-question" id="next-question">下一题</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 页面底部 -->
+    <footer class="py-4 bg-light">
+        <div class="container text-center">
+            <p class="mb-0">© 2025 ColorPal. 保留所有权利。</p>
+        </div>
+    </footer>
+
+    <!-- JS库 -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // 游戏状态
+            const gameState = {
+                currentScore: 0,
+                totalQuestions: 0,
+                correctAnswer: null,
+                gameTypes: ['monochromatic', 'analogous', 'complementary', 'triadic'],
+                currentGameType: null
+            };
+            
+            // DOM元素
+            const color1 = document.getElementById('color-1');
+            const color2 = document.getElementById('color-2');
+            const color3 = document.getElementById('color-3');
+            const options = [
+                document.getElementById('option-1'),
+                document.getElementById('option-2'),
+                document.getElementById('option-3'),
+                document.getElementById('option-4')
+            ];
+            const scoreElement = document.getElementById('current-score');
+            const totalElement = document.getElementById('total-questions');
+            const resultElement = document.getElementById('result');
+            const resultTextElement = document.getElementById('result-text');
+            const resultExplanationElement = document.getElementById('result-explanation');
+            const nextButton = document.getElementById('next-question');
+            
+            // 色彩辅助函数
+            function hexToHSL(hex) {
+                // 转换为RGB
+                let r = parseInt(hex.substring(1, 3), 16) / 255;
+                let g = parseInt(hex.substring(3, 5), 16) / 255;
+                let b = parseInt(hex.substring(5, 7), 16) / 255;
+                
+                // 找出最大和最小RGB
+                let max = Math.max(r, g, b);
+                let min = Math.min(r, g, b);
+                
+                let h, s, l = (max + min) / 2;
+                
+                if (max === min) {
+                    h = s = 0; // 没有饱和度的情况下，hue为0
+                } else {
+                    let d = max - min;
+                    s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+                    
+                    switch (max) {
+                        case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+                        case g: h = (b - r) / d + 2; break;
+                        case b: h = (r - g) / d + 4; break;
+                    }
+                    
+                    h /= 6;
+                }
+                
+                return { h: h * 360, s: s * 100, l: l * 100 };
+            }
+            
+            function hslToHex(h, s, l) {
+                h /= 360;
+                s /= 100;
+                l /= 100;
+                
+                let r, g, b;
+                
+                if (s === 0) {
+                    r = g = b = l; // 没有饱和度的情况下是灰色
+                } else {
+                    const hue2rgb = function(p, q, t) {
+                        if (t < 0) t += 1;
+                        if (t > 1) t -= 1;
+                        if (t < 1/6) return p + (q - p) * 6 * t;
+                        if (t < 1/2) return q;
+                        if (t < 2/3) return p + (q - p) * (2/3 - t) * 6;
+                        return p;
+                    };
+                    
+                    const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+                    const p = 2 * l - q;
+                    
+                    r = hue2rgb(p, q, h + 1/3);
+                    g = hue2rgb(p, q, h);
+                    b = hue2rgb(p, q, h - 1/3);
+                }
+                
+                const toHex = x => {
+                    const hex = Math.round(x * 255).toString(16);
+                    return hex.length === 1 ? '0' + hex : hex;
+                };
+                
+                return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
+            }
+            
+            // 生成随机颜色
+            function getRandomColor() {
+                const h = Math.floor(Math.random() * 360);
+                const s = 70 + Math.floor(Math.random() * 30);
+                const l = 45 + Math.floor(Math.random() * 25);
+                return hslToHex(h, s, l);
+            }
+            
+            // 生成下一个颜色（基于选择的方案类型）
+            function getNextColor(baseColor, type) {
+                const hsl = hexToHSL(baseColor);
+                
+                switch (type) {
+                    case 'monochromatic':
+                        // 保持相同色相，改变亮度
+                        return hslToHex(hsl.h, hsl.s, Math.max(20, Math.min(80, hsl.l - 20 + Math.random() * 40)));
+                    
+                    case 'analogous':
+                        // 类似色（相近的色相）
+                        return hslToHex((hsl.h + 30 - Math.random() * 15) % 360, hsl.s, hsl.l);
+                    
+                    case 'complementary':
+                        // 互补色（相反的色相）
+                        return hslToHex((hsl.h + 180) % 360, hsl.s, hsl.l);
+                    
+                    case 'triadic':
+                        // 三色方案（相距120度的色相）
+                        return hslToHex((hsl.h + 120) % 360, hsl.s, hsl.l);
+                    
+                    default:
+                        return getRandomColor();
+                }
+            }
+            
+            // 生成新问题
+            function generateQuestion() {
+                // 重置UI
+                resultElement.style.display = 'none';
+                color3.innerHTML = '?';
+                color3.classList.add('question-mark');
+                
+                // 更新游戏状态
+                gameState.totalQuestions++;
+                totalElement.textContent = gameState.totalQuestions;
+                
+                // 随机选择游戏类型
+                gameState.currentGameType = gameState.gameTypes[Math.floor(Math.random() * gameState.gameTypes.length)];
+                
+                // 生成第一个基础颜色
+                const baseColor = getRandomColor();
+                color1.style.backgroundColor = baseColor;
+                
+                // 生成第二个颜色（基于游戏类型）
+                const secondColor = getNextColor(baseColor, gameState.currentGameType);
+                color2.style.backgroundColor = secondColor;
+                
+                // 生成正确答案（第三个颜色）
+                gameState.correctAnswer = getNextColor(secondColor, gameState.currentGameType);
+                
+                // 生成选项（包括正确答案和3个干扰项）
+                const allOptions = [gameState.correctAnswer];
+                
+                // 添加干扰项
+                while (allOptions.length < 4) {
+                    const distractorColor = getRandomColor();
+                    // 确保选项不重复
+                    if (!allOptions.includes(distractorColor)) {
+                        allOptions.push(distractorColor);
+                    }
+                }
+                
+                // 打乱选项顺序
+                for (let i = allOptions.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [allOptions[i], allOptions[j]] = [allOptions[j], allOptions[i]];
+                }
+                
+                // 显示选项
+                options.forEach((option, index) => {
+                    option.style.backgroundColor = allOptions[index];
+                    option.textContent = allOptions[index].toUpperCase();
+                    
+                    // 添加点击事件
+                    option.onclick = function() {
+                        checkAnswer(allOptions[index]);
+                    };
+                });
+            }
+            
+            // 检查答案
+            function checkAnswer(selectedColor) {
+                // 显示正确答案
+                color3.innerHTML = '';
+                color3.classList.remove('question-mark');
+                color3.style.backgroundColor = gameState.correctAnswer;
+                
+                // 检查是否正确
+                const isCorrect = selectedColor === gameState.correctAnswer;
+                
+                // 更新得分
+                if (isCorrect) {
+                    gameState.currentScore++;
+                    scoreElement.textContent = gameState.currentScore;
+                }
+                
+                // 显示结果
+                resultElement.style.display = 'block';
+                resultElement.className = 'game-result ' + (isCorrect ? 'correct' : 'incorrect');
+                
+                if (isCorrect) {
+                    resultTextElement.textContent = '恭喜，答对了！';
+                    resultExplanationElement.textContent = getExplanationText(true);
+                } else {
+                    resultTextElement.textContent = '回答错误';
+                    resultExplanationElement.textContent = getExplanationText(false);
+                }
+                
+                // 禁用选项按钮
+                options.forEach(option => {
+                    option.onclick = null;
+                });
+            }
+            
+            // 获取解释文本
+            function getExplanationText(isCorrect) {
+                let baseText;
+                
+                switch (gameState.currentGameType) {
+                    case 'monochromatic':
+                        baseText = '这是一组单色配色，颜色有相同的色相，但亮度或饱和度不同。';
+                        break;
+                    case 'analogous':
+                        baseText = '这是一组类似配色，颜色的色相在色轮上相邻。';
+                        break;
+                    case 'complementary':
+                        baseText = '这是一组互补配色，颜色的色相在色轮上相对。';
+                        break;
+                    case 'triadic':
+                        baseText = '这是一组三分配色，颜色的色相在色轮上成120度角。';
+                        break;
+                    default:
+                        baseText = '这种配色方案基于色彩理论。';
+                }
+                
+                return isCorrect ? 
+                    `${baseText} 你很好地理解了这种配色规律！` : 
+                    `${baseText} 正确答案是 ${gameState.correctAnswer.toUpperCase()}。`;
+            }
+            
+            // 下一题按钮点击事件
+            nextButton.addEventListener('click', generateQuestion);
+            
+            // 开始游戏
+            generateQuestion();
+        });
+    </script>
+</body>
+</html> 
