@@ -1,0 +1,1054 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ColorPal - 简洁风配色助手</title>
+    <!-- 图标库 -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css">
+    <!-- 基础样式 -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+    <!-- 色轮选择器 -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@simonwep/pickr/dist/themes/nano.min.css">
+    <!-- 图像处理库 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css">
+    <!-- 自定义样式 -->
+    <link rel="stylesheet" href="style.css">
+    <!-- 网站图标 -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎨</text></svg>">
+</head>
+<body>
+    <!-- 顶部导航 -->
+    <header class="header">
+        <div class="container-fluid">
+            <nav class="navbar navbar-expand-lg">
+                <div class="container-fluid">
+                    <a class="navbar-brand" href="#">
+                        <i class="ri-palette-line"></i> ColorPal
+                    </a>
+                    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                        <span class="navbar-toggler-icon"></span>
+                    </button>
+                    <div class="collapse navbar-collapse" id="navbarNav">
+                        <ul class="navbar-nav">
+                            <li class="nav-item">
+                                <a class="nav-link active" data-section="color-tools">配色工具</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" data-section="palette-generator">调色板生成</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" data-section="image-tools">图像处理</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" data-section="color-checker">配色检测</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" data-section="color-games">配色游戏</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" data-section="color-wiki">颜色百科</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" data-section="theme-color">主题配色</a>
+                            </li>
+                        </ul>
+                        <div class="ms-auto d-flex align-items-center">
+                            <div class="dropdown">
+                                <button class="btn btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                    设置
+                                </button>
+                                <ul class="dropdown-menu dropdown-menu-end">
+                                    <li><a class="dropdown-item" href="#" id="clear-data"><i class="ri-delete-bin-line"></i> 清除数据</a></li>
+                                    <li><a class="dropdown-item" href="#" id="export-data"><i class="ri-download-line"></i> 导出数据</a></li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </nav>
+        </div>
+    </header>
+
+    <!-- 主内容区 -->
+    <main class="main-content">
+        <!-- 配色工具部分 -->
+        <section id="color-tools" class="section-content active">
+            <div class="container">
+                <h2 class="section-title">配色表生成工具</h2>
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="card mb-4">
+                            <div class="card-body">
+                                <h5 class="card-title">基础颜色选择</h5>
+                                <div id="color-picker-container"></div>
+                                <div class="mt-3">
+                                    <select id="harmony-type" class="form-select">
+                                        <option value="monochromatic">单色</option>
+                                        <option value="analogous">类比色</option>
+                                        <option value="complementary">互补色</option>
+                                        <option value="triadic">三分色</option>
+                                        <option value="tetradic">四分色</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-8">
+                        <div class="card">
+                            <div class="card-body">
+                                <h5 class="card-title">生成的配色方案</h5>
+                                <div id="color-palette" class="d-flex flex-wrap"></div>
+                                <button id="save-palette" class="btn btn-primary mt-3">
+                                    <i class="ri-save-line me-1"></i> 保存配色方案
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 调色板生成部分 -->
+        <section id="palette-generator" class="section-content">
+            <div class="container">
+                <h2 class="section-title">图片上传生成调色板</h2>
+                <div class="card">
+                    <div class="card-body">
+                        <div id="image-drop-area" class="drop-area">
+                            <p>拖放图片到此处，或<label for="fileInput" class="upload-label">点击上传</label></p>
+                            <input type="file" id="fileInput" accept="image/*" hidden>
+                        </div>
+                        <div id="image-preview" class="mt-3 d-none">
+                            <img id="preview-img" class="img-fluid" src="" alt="预览图">
+                            <div class="mt-3">
+                                <label for="color-count">提取颜色数量：<span id="color-count-value">5</span></label>
+                                <input type="range" class="form-range" min="3" max="10" value="5" id="color-count">
+                            </div>
+                            <div id="extracted-colors" class="d-flex flex-wrap mt-3"></div>
+                            <button id="download-palette" class="btn btn-primary mt-3">
+                                <i class="ri-download-line me-1"></i> 下载调色板
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="color-palette-section" class="section-content">
+            <div class="container">
+                <h2 class="section-title">调色板生成</h2>
+                
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="card">
+                            <div class="card-body">
+                                <h5 class="card-title">选择基准颜色</h5>
+                                <div id="color-picker-container" class="my-3">
+                                    <input type="text" id="base-color" class="form-control color-picker-input" placeholder="#000000">
+                                </div>
+                                
+                                <div class="form-group mb-3">
+                                    <label for="harmony-type">选择配色类型:</label>
+                                    <select id="harmony-type" class="form-select">
+                                        <option value="complementary">互补色</option>
+                                        <option value="analogous">邻近色</option>
+                                        <option value="triadic">三等分色</option>
+                                        <option value="tetradic">四等分色</option>
+                                        <option value="monochromatic">单色系</option>
+                                        <option value="split-complementary">分裂互补色</option>
+                                    </select>
+                                </div>
+                                
+                                <button id="generate-harmony" class="btn btn-primary w-100">
+                                    <i class="ri-palette-line me-1"></i> 生成色彩和谐配色
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-8">
+                        <div class="card">
+                            <div class="card-body">
+                                <h5 class="card-title">配色方案</h5>
+                                <p class="card-text">根据色彩和谐原理生成的配色方案</p>
+                                
+                                <div id="harmony-colors" class="d-flex flex-wrap justify-content-center my-4">
+                                    <!-- 生成的配色方案将显示在这里 -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- WCAG颜色对比度检测部分 -->
+        <section id="color-checker" class="section-content">
+            <div class="container">
+                <h2 class="section-title">WCAG颜色对比度检测</h2>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="card mb-4">
+                            <div class="card-header">
+                                <h5 class="card-title">选择颜色</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <label class="form-label">前景色</label>
+                                    <div class="input-group">
+                                        <input type="text" class="form-control" id="foreground-color" value="#000000">
+                                        <button class="btn btn-outline-secondary" type="button" id="foreground-color-picker">
+                                            <i class="ri-palette-line"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">背景色</label>
+                                    <div class="input-group">
+                                        <input type="text" class="form-control" id="background-color" value="#FFFFFF">
+                                        <button class="btn btn-outline-secondary" type="button" id="background-color-picker">
+                                            <i class="ri-palette-line"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">对比度比率</label>
+                                    <div class="h4 mb-0" id="contrast-ratio">0.00</div>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">对比度等级</label>
+                                    <div class="h5 mb-0" id="contrast-level">-</div>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">状态</label>
+                                    <div class="h5 mb-0" id="contrast-status">-</div>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">通过状态</label>
+                                    <div class="h5 mb-0" id="contrast-pass-status">-</div>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">调整建议</label>
+                                    <div class="h6 mb-0" id="contrast-suggestion">-</div>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">预览</label>
+                                    <div class="p-3 border rounded" id="contrast-preview">
+                                        预览文本
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-body">
+                                <h5 class="card-title">对比度结果</h5>
+                                <div id="contrast-result">
+                                    <div class="contrast-score mb-3">
+                                        <h3>对比度：<span id="contrast-ratio">--</span></h3>
+                                    </div>
+                                    <div class="contrast-levels mb-3">
+                                        <div class="contrast-level">
+                                            <span>WCAG AA (正常文本):</span>
+                                            <span id="wcag-aa" class="badge">未检测</span>
+                                        </div>
+                                        <div class="contrast-level">
+                                            <span>WCAG AAA (正常文本):</span>
+                                            <span id="wcag-aaa" class="badge">未检测</span>
+                                        </div>
+                                        <div class="contrast-level">
+                                            <span>WCAG AA (大文本):</span>
+                                            <span id="wcag-aa-large" class="badge">未检测</span>
+                                        </div>
+                                        <div class="contrast-level">
+                                            <span>WCAG AAA (大文本):</span>
+                                            <span id="wcag-aaa-large" class="badge">未检测</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div id="contrast-preview" class="p-3 mt-3 rounded">
+                                    <h4>预览</h4>
+                                    <p class="display-6">Aa</p>
+                                    <p>这是正常大小文本的示例。这种大小的文本应该清晰易读。</p>
+                                    <small>这是小号文本的示例，对于小号文本来说，对比度要求更高。</small>
+                                </div>
+                                <div id="contrast-suggestion" class="mt-3 d-none alert alert-info">
+                                    <!-- 改进建议会显示在这里 -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="color-games" class="section-content">
+            <div class="container">
+                <h2 class="section-title">配色游戏区</h2>
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <h5 class="card-title">猜猜下一个颜色</h5>
+                        <p class="card-text">测试你对色彩规律的理解。根据给定的颜色序列，猜测下一个颜色应该是什么？</p>
+                        <a href="color-games.html" class="btn btn-primary">
+                            <i class="ri-gamepad-line me-1"></i> 开始游戏
+                        </a>
+                    </div>
+                </div>
+                
+                <div class="alert alert-info">
+                    更多配色游戏正在开发中，敬请期待！
+                </div>
+            </div>
+        </section>
+
+        <section id="color-wiki" class="section-content">
+            <div class="container">
+                <h2 class="section-title">颜色百科</h2>
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <h5 class="card-title">颜色大全</h5>
+                        <p class="card-text">以下是常用颜色的科普，点击颜色方块可复制HEX色值。</p>
+                        
+                        <div class="color-category mb-4">
+                            <h6 class="color-category-title">红色系</h6>
+                            <div class="row g-3">
+                                <div class="col-md-3 col-sm-6">
+                                    <div class="color-item">
+                                        <div class="color-preview" style="background-color: #FF0000;">
+                                            <span class="color-hex">#FF0000</span>
+                                        </div>
+                                        <div class="color-info">
+                                            <div class="color-name">红色</div>
+                                            <div class="color-actions">
+                                                <button class="btn btn-sm copy-btn" data-color="#FF0000"><i class="ri-file-copy-line"></i></button>
+                                                <button class="btn btn-sm search-btn" data-color="#FF0000"><i class="ri-search-line"></i></button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 col-sm-6">
+                                    <div class="color-item">
+                                        <div class="color-preview" style="background-color: #FF2400;">
+                                            <span class="color-hex">#FF2400</span>
+                                        </div>
+                                        <div class="color-info">
+                                            <div class="color-name">猩红色</div>
+                                            <div class="color-actions">
+                                                <button class="btn btn-sm copy-btn" data-color="#FF2400"><i class="ri-file-copy-line"></i></button>
+                                                <button class="btn btn-sm search-btn" data-color="#FF2400"><i class="ri-search-line"></i></button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 col-sm-6">
+                                    <div class="color-item">
+                                        <div class="color-preview" style="background-color: #FF4D00;">
+                                            <span class="color-hex">#FF4D00</span>
+                                        </div>
+                                        <div class="color-info">
+                                            <div class="color-name">朱红色</div>
+                                            <div class="color-actions">
+                                                <button class="btn btn-sm copy-btn" data-color="#FF4D00"><i class="ri-file-copy-line"></i></button>
+                                                <button class="btn btn-sm search-btn" data-color="#FF4D00"><i class="ri-search-line"></i></button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 col-sm-6">
+                                    <div class="color-item">
+                                        <div class="color-preview" style="background-color: #E32636;">
+                                            <span class="color-hex">#E32636</span>
+                                        </div>
+                                        <div class="color-info">
+                                            <div class="color-name">深红色</div>
+                                            <div class="color-actions">
+                                                <button class="btn btn-sm copy-btn" data-color="#E32636"><i class="ri-file-copy-line"></i></button>
+                                                <button class="btn btn-sm search-btn" data-color="#E32636"><i class="ri-search-line"></i></button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="color-category mb-4">
+                            <h6 class="color-category-title">黄色系</h6>
+                            <div class="row g-3">
+                                <div class="col-md-3 col-sm-6">
+                                    <div class="color-item">
+                                        <div class="color-preview" style="background-color: #FFFF00;">
+                                            <span class="color-hex">#FFFF00</span>
+                                        </div>
+                                        <div class="color-info">
+                                            <div class="color-name">黄色</div>
+                                            <div class="color-actions">
+                                                <button class="btn btn-sm copy-btn" data-color="#FFFF00"><i class="ri-file-copy-line"></i></button>
+                                                <button class="btn btn-sm search-btn" data-color="#FFFF00"><i class="ri-search-line"></i></button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 col-sm-6">
+                                    <div class="color-item">
+                                        <div class="color-preview" style="background-color: #FFD700;">
+                                            <span class="color-hex">#FFD700</span>
+                                        </div>
+                                        <div class="color-info">
+                                            <div class="color-name">金色</div>
+                                            <div class="color-actions">
+                                                <button class="btn btn-sm copy-btn" data-color="#FFD700"><i class="ri-file-copy-line"></i></button>
+                                                <button class="btn btn-sm search-btn" data-color="#FFD700"><i class="ri-search-line"></i></button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 col-sm-6">
+                                    <div class="color-item">
+                                        <div class="color-preview" style="background-color: #FBEC5D;">
+                                            <span class="color-hex">#FBEC5D</span>
+                                        </div>
+                                        <div class="color-info">
+                                            <div class="color-name">芥末黄</div>
+                                            <div class="color-actions">
+                                                <button class="btn btn-sm copy-btn" data-color="#FBEC5D"><i class="ri-file-copy-line"></i></button>
+                                                <button class="btn btn-sm search-btn" data-color="#FBEC5D"><i class="ri-search-line"></i></button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 col-sm-6">
+                                    <div class="color-item">
+                                        <div class="color-preview" style="background-color: #FFA500;">
+                                            <span class="color-hex">#FFA500</span>
+                                        </div>
+                                        <div class="color-info">
+                                            <div class="color-name">橙色</div>
+                                            <div class="color-actions">
+                                                <button class="btn btn-sm copy-btn" data-color="#FFA500"><i class="ri-file-copy-line"></i></button>
+                                                <button class="btn btn-sm search-btn" data-color="#FFA500"><i class="ri-search-line"></i></button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="color-category mb-4">
+                            <h6 class="color-category-title">绿色系</h6>
+                            <div class="row g-3">
+                                <div class="col-md-3 col-sm-6">
+                                    <div class="color-item">
+                                        <div class="color-preview" style="background-color: #00FF00;">
+                                            <span class="color-hex">#00FF00</span>
+                                        </div>
+                                        <div class="color-info">
+                                            <div class="color-name">绿色</div>
+                                            <div class="color-actions">
+                                                <button class="btn btn-sm copy-btn" data-color="#00FF00"><i class="ri-file-copy-line"></i></button>
+                                                <button class="btn btn-sm search-btn" data-color="#00FF00"><i class="ri-search-line"></i></button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 col-sm-6">
+                                    <div class="color-item">
+                                        <div class="color-preview" style="background-color: #CCFF00;">
+                                            <span class="color-hex">#CCFF00</span>
+                                        </div>
+                                        <div class="color-info">
+                                            <div class="color-name">柠檬绿</div>
+                                            <div class="color-actions">
+                                                <button class="btn btn-sm copy-btn" data-color="#CCFF00"><i class="ri-file-copy-line"></i></button>
+                                                <button class="btn btn-sm search-btn" data-color="#CCFF00"><i class="ri-search-line"></i></button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 col-sm-6">
+                                    <div class="color-item">
+                                        <div class="color-preview" style="background-color: #008000;">
+                                            <span class="color-hex">#008000</span>
+                                        </div>
+                                        <div class="color-info">
+                                            <div class="color-name">深绿色</div>
+                                            <div class="color-actions">
+                                                <button class="btn btn-sm copy-btn" data-color="#008000"><i class="ri-file-copy-line"></i></button>
+                                                <button class="btn btn-sm search-btn" data-color="#008000"><i class="ri-search-line"></i></button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 col-sm-6">
+                                    <div class="color-item">
+                                        <div class="color-preview" style="background-color: #7FFF00;">
+                                            <span class="color-hex">#7FFF00</span>
+                                        </div>
+                                        <div class="color-info">
+                                            <div class="color-name">查特酸绿</div>
+                                            <div class="color-actions">
+                                                <button class="btn btn-sm copy-btn" data-color="#7FFF00"><i class="ri-file-copy-line"></i></button>
+                                                <button class="btn btn-sm search-btn" data-color="#7FFF00"><i class="ri-search-line"></i></button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="color-category mb-4">
+                            <h6 class="color-category-title">蓝色系</h6>
+                            <div class="row g-3">
+                                <div class="col-md-3 col-sm-6">
+                                    <div class="color-item">
+                                        <div class="color-preview" style="background-color: #0000FF;">
+                                            <span class="color-hex">#0000FF</span>
+                                        </div>
+                                        <div class="color-info">
+                                            <div class="color-name">蓝色</div>
+                                            <div class="color-actions">
+                                                <button class="btn btn-sm copy-btn" data-color="#0000FF"><i class="ri-file-copy-line"></i></button>
+                                                <button class="btn btn-sm search-btn" data-color="#0000FF"><i class="ri-search-line"></i></button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 col-sm-6">
+                                    <div class="color-item">
+                                        <div class="color-preview" style="background-color: #1E90FF;">
+                                            <span class="color-hex">#1E90FF</span>
+                                        </div>
+                                        <div class="color-info">
+                                            <div class="color-name">道奇蓝</div>
+                                            <div class="color-actions">
+                                                <button class="btn btn-sm copy-btn" data-color="#1E90FF"><i class="ri-file-copy-line"></i></button>
+                                                <button class="btn btn-sm search-btn" data-color="#1E90FF"><i class="ri-search-line"></i></button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 col-sm-6">
+                                    <div class="color-item">
+                                        <div class="color-preview" style="background-color: #00FFFF;">
+                                            <span class="color-hex">#00FFFF</span>
+                                        </div>
+                                        <div class="color-info">
+                                            <div class="color-name">青色</div>
+                                            <div class="color-actions">
+                                                <button class="btn btn-sm copy-btn" data-color="#00FFFF"><i class="ri-file-copy-line"></i></button>
+                                                <button class="btn btn-sm search-btn" data-color="#00FFFF"><i class="ri-search-line"></i></button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 col-sm-6">
+                                    <div class="color-item">
+                                        <div class="color-preview" style="background-color: #4169E1;">
+                                            <span class="color-hex">#4169E1</span>
+                                        </div>
+                                        <div class="color-info">
+                                            <div class="color-name">皇家蓝</div>
+                                            <div class="color-actions">
+                                                <button class="btn btn-sm copy-btn" data-color="#4169E1"><i class="ri-file-copy-line"></i></button>
+                                                <button class="btn btn-sm search-btn" data-color="#4169E1"><i class="ri-search-line"></i></button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="color-category mb-4">
+                            <h6 class="color-category-title">紫色系</h6>
+                            <div class="row g-3">
+                                <div class="col-md-3 col-sm-6">
+                                    <div class="color-item">
+                                        <div class="color-preview" style="background-color: #800080;">
+                                            <span class="color-hex">#800080</span>
+                                        </div>
+                                        <div class="color-info">
+                                            <div class="color-name">紫色</div>
+                                            <div class="color-actions">
+                                                <button class="btn btn-sm copy-btn" data-color="#800080"><i class="ri-file-copy-line"></i></button>
+                                                <button class="btn btn-sm search-btn" data-color="#800080"><i class="ri-search-line"></i></button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 col-sm-6">
+                                    <div class="color-item">
+                                        <div class="color-preview" style="background-color: #DA70D6;">
+                                            <span class="color-hex">#DA70D6</span>
+                                        </div>
+                                        <div class="color-info">
+                                            <div class="color-name">兰花紫</div>
+                                            <div class="color-actions">
+                                                <button class="btn btn-sm copy-btn" data-color="#DA70D6"><i class="ri-file-copy-line"></i></button>
+                                                <button class="btn btn-sm search-btn" data-color="#DA70D6"><i class="ri-search-line"></i></button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 col-sm-6">
+                                    <div class="color-item">
+                                        <div class="color-preview" style="background-color: #8A2BE2;">
+                                            <span class="color-hex">#8A2BE2</span>
+                                        </div>
+                                        <div class="color-info">
+                                            <div class="color-name">紫罗兰色</div>
+                                            <div class="color-actions">
+                                                <button class="btn btn-sm copy-btn" data-color="#8A2BE2"><i class="ri-file-copy-line"></i></button>
+                                                <button class="btn btn-sm search-btn" data-color="#8A2BE2"><i class="ri-search-line"></i></button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 col-sm-6">
+                                    <div class="color-item">
+                                        <div class="color-preview" style="background-color: #FF00FF;">
+                                            <span class="color-hex">#FF00FF</span>
+                                        </div>
+                                        <div class="color-info">
+                                            <div class="color-name">洋红色</div>
+                                            <div class="color-actions">
+                                                <button class="btn btn-sm copy-btn" data-color="#FF00FF"><i class="ri-file-copy-line"></i></button>
+                                                <button class="btn btn-sm search-btn" data-color="#FF00FF"><i class="ri-search-line"></i></button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="color-category mb-4">
+                            <h6 class="color-category-title">中性色</h6>
+                            <div class="row g-3">
+                                <div class="col-md-3 col-sm-6">
+                                    <div class="color-item">
+                                        <div class="color-preview" style="background-color: #000000;">
+                                            <span class="color-hex">#000000</span>
+                                        </div>
+                                        <div class="color-info">
+                                            <div class="color-name">黑色</div>
+                                            <div class="color-actions">
+                                                <button class="btn btn-sm copy-btn" data-color="#000000"><i class="ri-file-copy-line"></i></button>
+                                                <button class="btn btn-sm search-btn" data-color="#000000"><i class="ri-search-line"></i></button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 col-sm-6">
+                                    <div class="color-item">
+                                        <div class="color-preview" style="background-color: #FFFFFF; border: 1px solid #eee;">
+                                            <span class="color-hex">#FFFFFF</span>
+                                        </div>
+                                        <div class="color-info">
+                                            <div class="color-name">白色</div>
+                                            <div class="color-actions">
+                                                <button class="btn btn-sm copy-btn" data-color="#FFFFFF"><i class="ri-file-copy-line"></i></button>
+                                                <button class="btn btn-sm search-btn" data-color="#FFFFFF"><i class="ri-search-line"></i></button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 col-sm-6">
+                                    <div class="color-item">
+                                        <div class="color-preview" style="background-color: #808080;">
+                                            <span class="color-hex">#808080</span>
+                                        </div>
+                                        <div class="color-info">
+                                            <div class="color-name">灰色</div>
+                                            <div class="color-actions">
+                                                <button class="btn btn-sm copy-btn" data-color="#808080"><i class="ri-file-copy-line"></i></button>
+                                                <button class="btn btn-sm search-btn" data-color="#808080"><i class="ri-search-line"></i></button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 col-sm-6">
+                                    <div class="color-item">
+                                        <div class="color-preview" style="background-color: #A0522D;">
+                                            <span class="color-hex">#A0522D</span>
+                                        </div>
+                                        <div class="color-info">
+                                            <div class="color-name">赭石色</div>
+                                            <div class="color-actions">
+                                                <button class="btn btn-sm copy-btn" data-color="#A0522D"><i class="ri-file-copy-line"></i></button>
+                                                <button class="btn btn-sm search-btn" data-color="#A0522D"><i class="ri-search-line"></i></button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="d-flex justify-content-center mt-4">
+                            <button id="show-more-colors" class="btn btn-outline-primary">
+                                <i class="ri-more-2-fill me-1"></i> 查看更多颜色
+                            </button>
+                            <a href="color-encyclopedia.html" class="btn btn-primary ms-2">
+                                <i class="ri-book-open-line me-1"></i> 打开完整颜色百科
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">色彩理论</h5>
+                        <p>色彩理论是研究如何使用和组合色彩的学科，它有助于理解色彩如何影响人们的情绪和行为。</p>
+                        
+                        <div class="row mb-4">
+                            <div class="col-md-4">
+                                <div class="theory-card">
+                                    <h6>色相(Hue)</h6>
+                                    <p>色相是指色彩的基本属性，如红色、蓝色、黄色等。</p>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="theory-card">
+                                    <h6>饱和度(Saturation)</h6>
+                                    <p>饱和度指的是色彩的纯度或强度，高饱和度的颜色看起来更鲜艳。</p>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="theory-card">
+                                    <h6>明度(Lightness)</h6>
+                                    <p>明度指的是色彩的亮度或暗度，高明度的颜色看起来更接近白色。</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="d-flex justify-content-center">
+                            <a href="color-encyclopedia.html#color-theory" class="btn btn-outline-primary">
+                                <i class="ri-book-open-line me-1"></i> 了解更多色彩理论
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 主题配色部分 -->
+        <section id="theme-color" class="section-content">
+            <div class="container">
+                <h2 class="section-title">主题配色助手</h2>
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="card mb-4">
+                            <div class="card-header">
+                                <h5 class="card-title mb-0">
+                                    <i class="ri-palette-line me-2"></i>节日/活动主题配色推荐
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <div id="theme-color-container">
+                                    <!-- 主题选择和颜色展示区域将由JavaScript动态生成 -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- AI助手部分 -->
+        <section id="ai-assistant" class="section-content">
+            <div class="container">
+                <h2 class="section-title">AI配色助手</h2>
+                <div class="card">
+                    <div class="card-body">
+                        <p>你可以通过右下角的浮动按钮随时打开AI助手对话框。AI助手可以：</p>
+                        <ul>
+                            <li>根据你的描述生成配色方案</li>
+                            <li>分析上传图片的颜色构成</li>
+                            <li>检查颜色组合的可访问性</li>
+                            <li>提供专业的配色建议</li>
+                        </ul>
+                        <p>试试问AI："帮我为电商网站设计一套现代配色"</p>
+                        <button id="open-ai-assistant" class="btn btn-primary mt-3">
+                            <i class="ri-robot-line me-1"></i> 打开AI助手
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 图像处理工具部分 -->
+        <section id="image-tools" class="section-content">
+            <div class="container">
+                <h2 class="section-title">图像处理工具</h2>
+                
+                <!-- 图像上传区域 -->
+                <div class="card" id="image-upload-card">
+                    <div class="card-body">
+                        <h5 class="card-title">上传图片</h5>
+                        <div id="image-tools-drop-area" class="drop-area">
+                            <p>拖放图片到此处，或<label for="imageToolsFileInput" class="upload-label">点击上传</label></p>
+                            <input type="file" id="imageToolsFileInput" accept="image/*" hidden>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 图片预览和编辑区域 -->
+                <div class="card mb-4 d-none" id="image-preview-card">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h5 class="card-title mb-0">图片编辑</h5>
+                            <button class="btn btn-sm btn-outline-secondary" id="change-image">
+                                <i class="ri-arrow-left-line"></i> 更换图片
+                            </button>
+                        </div>
+                        <div class="row">
+                            <!-- 预览区域 -->
+                            <div class="col-md-8">
+                                <div class="preview-container text-center">
+                                    <img id="preview-image" class="img-fluid" src="" alt="预览图">
+                                </div>
+                            </div>
+                            <!-- 工具区域 -->
+                            <div class="col-md-4">
+                                <div class="edit-tools">
+                                    <!-- 裁剪工具 -->
+                                    <div class="tool-section mb-3">
+                                        <h6>裁剪比例</h6>
+                                        <div class="btn-group ratio-button-group">
+                                            <button class="btn btn-sm btn-outline-primary active" data-ratio="free">自由</button>
+                                            <button class="btn btn-sm btn-outline-primary" data-ratio="1:1">1:1</button>
+                                            <button class="btn btn-sm btn-outline-primary" data-ratio="4:3">4:3</button>
+                                            <button class="btn btn-sm btn-outline-primary" data-ratio="16:9">16:9</button>
+                                        </div>
+                                        <div class="mt-2">
+                                            <button class="btn btn-sm btn-outline-secondary" id="rotate-left">
+                                                <i class="ri-anticlockwise-line"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-outline-secondary" id="rotate-right">
+                                                <i class="ri-clockwise-line"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-outline-secondary" id="flip-horizontal">
+                                                <i class="ri-arrow-left-right-line"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-outline-secondary" id="flip-vertical">
+                                                <i class="ri-arrow-up-down-line"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- 调整工具 -->
+                                    <div class="tool-section mb-3">
+                                        <h6>图像调整</h6>
+                                        <div class="mb-2">
+                                            <label>亮度</label>
+                                            <input type="range" class="form-range" id="brightness" min="-100" max="100" value="0">
+                                        </div>
+                                        <div class="mb-2">
+                                            <label>对比度</label>
+                                            <input type="range" class="form-range" id="contrast" min="-100" max="100" value="0">
+                                        </div>
+                                        <div class="mb-2">
+                                            <label>饱和度</label>
+                                            <input type="range" class="form-range" id="saturation" min="-100" max="100" value="0">
+                                        </div>
+                                    </div>
+
+                                    <!-- 滤镜工具 -->
+                                    <div class="tool-section mb-3">
+                                        <h6>滤镜效果</h6>
+                                        <div class="filter-buttons">
+                                            <button class="btn btn-sm btn-outline-primary active" data-filter="none">原图</button>
+                                            <button class="btn btn-sm btn-outline-primary" data-filter="grayscale">黑白</button>
+                                            <button class="btn btn-sm btn-outline-primary" data-filter="sepia">复古</button>
+                                            <button class="btn btn-sm btn-outline-primary" data-filter="blur">模糊</button>
+                                            <button class="btn btn-sm btn-outline-primary" data-filter="sharpen">锐化</button>
+                                        </div>
+                                    </div>
+
+                                    <!-- 水印工具 -->
+                                    <div class="tool-section mb-3">
+                                        <h6>添加水印</h6>
+                                        <div class="input-group input-group-sm mb-2">
+                                            <input type="text" class="form-control" id="watermark-text" placeholder="输入水印文字">
+                                            <button class="btn btn-outline-primary" id="add-text-watermark">添加</button>
+                                        </div>
+                                        <div class="mb-2">
+                                            <label class="form-label">水印颜色</label>
+                                            <div class="d-flex align-items-center">
+                                                <div id="watermark-color-picker" class="me-2"></div>
+                                                <input type="text" id="watermark-color" class="form-control form-control-sm" value="#FFFFFF" style="width: 100px;">
+                                            </div>
+                                        </div>
+                                        <div class="mb-2">
+                                            <label for="watermark-opacity" class="form-label">透明度</label>
+                                            <input type="range" class="form-range" id="watermark-opacity" min="0" max="100" value="50">
+                                        </div>
+                                        <div class="mb-2">
+                                            <label class="form-label">水印位置</label>
+                                            <select class="form-select form-select-sm" id="watermark-position">
+                                                <option value="center">居中</option>
+                                                <option value="top-left">左上角</option>
+                                                <option value="top-right">右上角</option>
+                                                <option value="bottom-left">左下角</option>
+                                                <option value="bottom-right">右下角</option>
+                                                <option value="tile">平铺</option>
+                                            </select>
+                                        </div>
+                                        <div class="mb-2">
+                                            <label class="form-label">水印样式</label>
+                                            <select class="form-select form-select-sm" id="watermark-style">
+                                                <option value="normal">正常</option>
+                                                <option value="rotate-45">右上倾斜45度</option>
+                                                <option value="rotate-neg-45">左上倾斜45度</option>
+                                            </select>
+                                        </div>
+                                        <div class="mb-2">
+                                            <label class="form-label">字体大小</label>
+                                            <input type="range" class="form-range" id="watermark-size" min="12" max="72" value="24">
+                                            <div class="text-muted small"><span id="watermark-size-value">24</span>px</div>
+                                        </div>
+                                        <div class="mb-2">
+                                            <label for="watermark-file" class="btn btn-sm btn-outline-primary w-100">
+                                                上传图片水印
+                                            </label>
+                                            <input type="file" id="watermark-file" accept="image/*" hidden>
+                                        </div>
+                                    </div>
+
+                                    <!-- 操作按钮 -->
+                                    <div class="tool-section">
+                                        <button class="btn btn-primary w-100 mb-2" id="apply-edit">应用编辑</button>
+                                        <button class="btn btn-outline-primary w-100 mb-2" id="reset-edit">重置编辑</button>
+                                        <button class="btn btn-success w-100" id="download-image">下载图片</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- 底部区域 -->
+    <footer class="footer mt-5">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-6">
+                    <h5>保存的配色方案</h5>
+                    <div id="saved-palettes" class="d-flex flex-wrap">
+                        <!-- 保存的配色会显示在这里 -->
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <h5>快速工具</h5>
+                    <div class="quick-tools">
+                        <button class="btn btn-outline-secondary btn-sm me-1 mb-1">随机配色</button>
+                        <button class="btn btn-outline-secondary btn-sm me-1 mb-1">清除历史</button>
+                        <button class="btn btn-outline-secondary btn-sm me-1 mb-1">导出所有</button>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <p class="mb-0">© 2025 ColorPal. 保留所有权利。</p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- 移动端底部导航 -->
+    <div class="mobile-nav d-md-none">
+        <div class="mobile-nav-item active" data-section="color-tools">
+            <i class="ri-palette-line"></i>
+            <span>配色工具</span>
+        </div>
+        <div class="mobile-nav-item" data-section="palette-generator">
+            <i class="ri-image-line"></i>
+            <span>调色板</span>
+        </div>
+        <div class="mobile-nav-item" data-section="color-checker">
+            <i class="ri-contrast-2-line"></i>
+            <span>检测</span>
+        </div>
+        <div class="mobile-nav-item" data-section="color-wiki">
+            <i class="ri-book-open-line"></i>
+            <span>百科</span>
+        </div>
+        <div class="mobile-nav-item" data-section="ai-assistant">
+            <i class="ri-robot-line"></i>
+            <span>AI助手</span>
+        </div>
+    </div>
+
+    <!-- AI助手悬浮按钮 -->
+    <div id="ai-assistant-button" class="ai-assistant-fab">
+        <i class="ri-robot-line"></i>
+    </div>
+
+    <!-- AI助手对话框 -->
+    <div id="ai-assistant-dialog" class="ai-dialog">
+        <div class="ai-dialog-header">
+            <h5><i class="ri-robot-line me-2"></i> ColorPal AI助手</h5>
+            <div>
+                <button id="ai-dialog-minimize" class="btn btn-sm"><i class="ri-subtract-line"></i></button>
+                <button id="ai-dialog-expand" class="btn btn-sm"><i class="ri-fullscreen-line"></i></button>
+                <button id="ai-dialog-close" class="btn btn-sm"><i class="ri-close-line"></i></button>
+            </div>
+        </div>
+        <div class="ai-dialog-content">
+            <div id="ai-messages" class="ai-messages">
+                <!-- 消息内容会显示在这里 -->
+                <div class="ai-message ai-message-bot">
+                    <div class="ai-message-content">
+                        <p>你好！我是ColorPal的AI助手，我可以帮你：</p>
+                        <ul>
+                            <li>根据描述生成配色方案</li>
+                            <li>分析图片的色彩构成</li>
+                            <li>检查颜色的WCAG可访问性</li>
+                        </ul>
+                        <p>试试问我一些关于配色的问题吧！</p>
+                    </div>
+                    <div class="ai-message-time">刚刚</div>
+                </div>
+            </div>
+        </div>
+        <div class="ai-dialog-footer">
+            <div class="ai-input-container">
+                <button id="ai-upload-button" class="ai-input-icon"><i class="ri-image-add-line"></i></button>
+                <button id="ai-voice-button" class="ai-input-icon"><i class="ri-mic-line"></i></button>
+                <input type="text" id="ai-input" placeholder="输入你的配色需求..." class="ai-input">
+                <button id="ai-send-button" class="ai-send-button"><i class="ri-send-plane-fill"></i></button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 底部JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@simonwep/pickr/dist/pickr.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/colorthief@2.4.0/dist/color-thief.umd.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
+    <!-- 抠图库 -->
+    <script>
+        // 优雅地加载背景移除库，并处理加载失败的情况
+        (function loadBackgroundRemovalLib() {
+            const script = document.createElement('script');
+            script.src = "https://unpkg.com/@imgly/background-removal@1.1.5/dist/browser/index.js";
+            script.type = "text/javascript";
+            script.async = true;
+            script.onload = function() {
+                console.log("背景移除库加载成功");
+            };
+            script.onerror = function() {
+                console.error("背景移除库加载失败");
+                // 显示通知给用户
+                setTimeout(function() {
+                    if (typeof showNotification === 'function') {
+                        showNotification("高级抠图功能不可用，将使用简易方法", "ri-error-warning-line");
+                    }
+                }, 3000);
+            };
+            document.head.appendChild(script);
+        })();
+    </script>
+    <!-- 主JS -->
+    <script src="script.js"></script>
+</body>
+</html> 
